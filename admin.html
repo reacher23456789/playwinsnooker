@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>PlayWin Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{--bg:#0a1f17;--panel:#12362a;--line:rgba(244,240,228,.14);--text:#f4f0e4;--dim:#9db3a5;--gold:#d9a422;--bad:#e8675c;--ok:#4cc38a;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 'Work Sans',system-ui,sans-serif}
+button{font:inherit;font-weight:600;background:var(--gold);color:#1a1405;border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+button:disabled{opacity:.5}button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+input{font:inherit;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:11px 12px;width:100%}
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+.box h1{margin:0 0 4px;font-size:22px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line)}
+header b{font-size:18px;margin-right:auto}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+.tab{background:transparent;color:var(--dim);border:1px solid transparent}.tab.on{color:var(--text);border-color:var(--gold)}
+main,#msg{max-width:1100px;margin:0 auto;padding:16px 20px}#msg{padding-bottom:0;min-height:1.4em}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.card b{font-size:24px}.card span,.dim{color:var(--dim);font-size:13px}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin-bottom:24px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+h2{font-size:17px;margin:22px 0 10px}.search{margin-bottom:14px;max-width:360px}
+.pill{padding:2px 9px;border-radius:99px;font-size:12px;background:var(--line)}
+.pill.successful,.pill.fulfilled,.pill.completed{background:rgba(76,195,138,.2);color:var(--ok)}
+.pill.failed,.pill.rejected,.pill.disputed,.pill.cancelled{background:rgba(232,103,92,.2);color:var(--bad)}
+.pill.pending,.pill.processing,.pill.in_progress{background:rgba(217,164,34,.2);color:var(--gold)}
+.bad{color:var(--bad)}.ok{color:var(--ok)}.neg{color:var(--bad)}.pos{color:var(--ok)}
+.pwwrap{position:relative}.pwwrap input{padding-right:46px}
+.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:transparent;color:var(--dim);padding:8px 11px}
+</style>
+</head>
+<body>
+
+<div id="login" class="center">
+  <form id="lf" class="box">
+    <h1>PlayWin Admin</h1>
+    <input id="em" type="email" placeholder="Email" required>
+    <div class="pwwrap">
+      <input id="pw" type="password" placeholder="Password" required>
+      <button type="button" id="eye" class="eye" aria-label="Show or hide password"><i class="fa-solid fa-eye"></i></button>
+    </div>
+    <button>Sign in</button>
+    <p id="lmsg" class="bad"></p>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header><b>PlayWin Admin</b><nav id="nav"></nav><button id="out" class="ghost">Sign out</button></header>
+  <p id="msg"></p>
+  <main id="view"></main>
+</div>
+
+<script>
+const sb = supabase.createClient(
+  'https://hahebqwitftchetfdjmo.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhaGVicXdpdGZ0Y2hldGZkam1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNzE5NTEsImV4cCI6MjEwNTk0Nzk1MX0.WOY8_fX8sZrz6Tu223dknVG_ZPxDDcVlU3XJzNgd4qs'
+);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n = x => Number(x || 0).toLocaleString();
+const dt = x => x ? new Date(x).toLocaleString([], {dateStyle:'medium', timeStyle:'short'}) : '-';
+const flag = c => c && c.length === 2 ? String.fromCodePoint(...[...c.toUpperCase()].map(k => 127397 + k.charCodeAt(0))) : '';
+const pill = s => `<span class="pill ${esc(s)}">${esc(s)}</span>`;
+const tbl = (head, rows) => `<div class="wrap"><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${
+  rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${head.length}" class="dim">Nothing here yet.</td></tr>`}</table></div>`;
+const say = (t, bad) => { const m = $('#msg'); m.textContent = t || ''; m.className = bad ? 'bad' : 'ok'; };
+
+const TABS = ['Overview', 'Users', 'Payments', 'Matches'];
+let tab = 'Overview', names = {}, users = [];
+const nm = id => esc(names[id] || String(id).slice(0, 8));
+
+async function vOverview() {
+  const g = async (t, c) => (await sb.from(t).select(c)).data || [];
+  const [w, d, wd, m, ps, cfg] = await Promise.all([
+    g('wallets', 'balance_coins'), g('deposits', 'status,coins_requested'), g('withdrawals', 'status,coins'),
+    g('matches', 'status,house_cut_coins'), g('player_stats', 'is_online'),
+    sb.from('app_config').select('is_live').maybeSingle()
+  ]);
+  const sum = (a, k, f = () => true) => a.filter(f).reduce((s, x) => s + Number(x[k] || 0), 0);
+  const pend = wd.filter(x => x.status === 'pending');
+  const cards = [
+    ['Players', n(ps.length)], ['Online now', n(ps.filter(p => p.is_online).length)],
+    ['Coins held in wallets', n(sum(w, 'balance_coins'))],
+    ['Deposited (coins)', n(sum(d, 'coins_requested', x => x.status === 'successful'))],
+    ['Pending withdrawals', `${pend.length} / ${n(sum(pend, 'coins'))}`],
+    ['Paid out (coins)', n(sum(wd, 'coins', x => x.status === 'fulfilled'))],
+    ['Live matches', n(m.filter(x => x.status === 'in_progress').length)],
+    ['Disputed matches', n(m.filter(x => x.status === 'disputed').length)],
+    ['House earnings (coins)', n(sum(m, 'house_cut_coins', x => x.status === 'completed'))],
+    ['Mode', cfg.data?.is_live ? 'LIVE' : 'TEST']
+  ];
+  return `<div class="cards">${cards.map(([l, v]) => `<div class="card"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+}
+
+async function vUsers() {
+  const { data, error } = await sb.rpc('admin_list_users');
+  if (error) return `<p class="bad">${esc(error.message)}</p>`;
+  users = data || [];
+  return '<input id="q" class="search" placeholder="Search username or email"><div id="ut"></div>';
+}
+function drawUsers() {
+  const q = ($('#q')?.value || '').toLowerCase();
+  const rows = users.filter(u => `${u.username} ${u.email}`.toLowerCase().includes(q))
+    .map(u => [esc(u.username), esc(u.email), `${flag(u.country)} ${esc(u.country || '')}`, n(u.balance_coins), dt(u.created_at), dt(u.last_seen_at)]);
+  $('#ut').innerHTML = tbl(['Username', 'Email', 'Country', 'Coins', 'Joined', 'Last seen'], rows);
+}
+
+async function vPayments() {
+  const q = t => sb.from(t).select('*').order('created_at', { ascending: false });
+  const [w, d, t] = await Promise.all([q('withdrawals').limit(100), q('deposits').limit(100), q('wallet_transactions').limit(50)]);
+  const wr = (w.data || []).map(x => [nm(x.user_id), n(x.coins),
+    `${esc(x.account_name)}<br><span class="dim">${esc(x.bank_name)} - ${esc(x.account_number)}</span>`,
+    pill(x.status), dt(x.created_at),
+    x.status === 'pending' ? `<button data-a="pay" data-id="${x.id}">Approve</button> <button class="ghost" data-a="rej" data-id="${x.id}">Reject</button>` : '']);
+  const dr = (d.data || []).map(x => [nm(x.user_id), `${n(x.charged_amount)} ${esc(x.currency)}`, n(x.coins_requested), pill(x.status), dt(x.created_at)]);
+  const tr = (t.data || []).map(x => [nm(x.user_id), esc(x.type),
+    `<span class="${x.amount_coins < 0 ? 'neg' : 'pos'}">${x.amount_coins > 0 ? '+' : ''}${n(x.amount_coins)}</span>`, n(x.balance_after_coins), dt(x.created_at)]);
+  return `<h2>Withdrawals</h2>${tbl(['Player', 'Coins', 'Account', 'Status', 'Requested', 'Action'], wr)}
+    <h2>Deposits</h2>${tbl(['Player', 'Paid', 'Coins', 'Status', 'Date'], dr)}
+    <h2>Recent wallet activity</h2>${tbl(['Player', 'Type', 'Coins', 'Balance after', 'Date'], tr)}`;
+}
+
+async function vMatches() {
+  const { data } = await sb.from('matches').select('*').order('started_at', { ascending: false }).limit(100);
+  const rows = (data || []).map(m => [`${nm(m.player_a)} vs ${nm(m.player_b)}`, n(m.stake_coins), `${m.score_a} - ${m.score_b}`,
+    pill(m.status), m.winner_id ? nm(m.winner_id) : '', dt(m.started_at),
+    m.status === 'disputed'
+      ? `<button data-a="win" data-id="${m.id}" data-w="${m.player_a}">${nm(m.player_a)} wins</button> <button data-a="win" data-id="${m.id}" data-w="${m.player_b}">${nm(m.player_b)} wins</button> <button class="ghost" data-a="ref" data-id="${m.id}">Refund both</button>`
+      : '']);
+  return tbl(['Players', 'Stake', 'Pots', 'Status', 'Winner', 'Started', 'Resolve disputes'], rows);
+}
+
+async function render() {
+  $('#nav').innerHTML = TABS.map(t => `<button class="tab ${t === tab ? 'on' : ''}" data-t="${t}">${t}</button>`).join('');
+  const { data } = await sb.from('profiles').select('id,username');
+  (data || []).forEach(p => names[p.id] = p.username);
+  $('#view').innerHTML = '<p class="dim">Loading...</p>';
+  $('#view').innerHTML = await ({ Overview: vOverview, Users: vUsers, Payments: vPayments, Matches: vMatches })[tab]();
+  if (tab === 'Users') { drawUsers(); $('#q').oninput = drawUsers; }
+}
+
+$('#nav').onclick = e => { const t = e.target.dataset.t; if (t) { tab = t; say(''); render(); } };
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const { a, id, w } = b.dataset; b.disabled = true;
+  const done = (err, okText) => say(err || okText, !!err);
+  if (a === 'pay' && confirm('Send this payout through Paystack now?')) {
+    const { data, error } = await sb.functions.invoke('process-withdrawal', { body: { withdrawal_id: id } });
+    done(error?.message || data?.error, 'Payout started. Status updates when Paystack confirms.');
+  } else if (a === 'rej') {
+    const r = prompt('Reason for rejecting (optional):');
+    if (r !== null) {
+      const { error } = await sb.rpc('admin_reject_withdrawal', { p_withdrawal_id: id, p_reason: r || null });
+      done(error?.message, 'Withdrawal rejected and coins refunded.');
+    }
+  } else if (a === 'win' && confirm('Pay this player the pot (minus the 10% house cut)?')) {
+    const { error } = await sb.rpc('admin_resolve_dispute', { p_match_id: id, p_winner: w });
+    done(error?.message, 'Dispute resolved and winner paid.');
+  } else if (a === 'ref' && confirm('Refund both players their stake?')) {
+    const { error } = await sb.rpc('admin_resolve_dispute', { p_match_id: id, p_winner: null });
+    done(error?.message, 'Match cancelled and both stakes refunded.');
+  }
+  render();
+});
+
+async function gate() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const { data: ok } = await sb.rpc('is_admin');
+  if (!ok) { await sb.auth.signOut(); $('#lmsg').textContent = 'This account is not an admin.'; return; }
+  $('#login').hidden = true; $('#app').hidden = false; render();
+}
+$('#lf').onsubmit = async e => {
+  e.preventDefault(); $('#lmsg').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('#em').value, password: $('#pw').value });
+  if (error) { $('#lmsg').textContent = error.message; return; }
+  gate();
+};
+$('#eye').onclick = () => {
+  const p = $('#pw'), show = p.type === 'password';
+  p.type = show ? 'text' : 'password';
+  $('#eye i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+};
+$('#out').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+gate();
+</script>
+</body>
+</html>
