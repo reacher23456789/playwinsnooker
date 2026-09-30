@@ -29,6 +29,7 @@ nav{display:flex;gap:4px;flex-wrap:wrap}
 main,#msg{max-width:1100px;margin:0 auto;padding:16px 20px}#msg{padding-bottom:0;min-height:1.4em}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.card.link{cursor:pointer;transition:background .15s,border-color .15s}.card.link:hover,.card.link:focus-visible{background:var(--soft);border-color:var(--gold);outline:0}
 .card b{font-size:24px}.card span,.dim{color:var(--dim);font-size:13px}
 .wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:24px}
 table{border-collapse:collapse;width:100%;font-size:14px}
@@ -96,14 +97,14 @@ async function vOverview() {
   const sum = (a, k, f = () => true) => a.filter(f).reduce((s, x) => s + Number(x[k] || 0), 0);
   const pend = wd.filter(x => x.status === 'pending');
   const cards = [
-    ['Players', n(ps.length)], ['Online now', n(ps.filter(p => p.is_online).length)],
-    ['Coins held in wallets', n(sum(w, 'balance_coins'))],
-    ['Deposited (coins)', n(sum(d, 'coins_requested', x => x.status === 'successful'))],
-    ['Pending withdrawals', `${pend.length} / ${n(sum(pend, 'coins'))}`],
-    ['Paid out (coins)', n(sum(wd, 'coins', x => x.status === 'fulfilled'))],
-    ['Live matches', n(m.filter(x => x.status === 'in_progress').length)],
-    ['Disputed matches', n(m.filter(x => x.status === 'disputed').length)],
-    ['House earnings (coins)', n(sum(m, 'house_cut_coins', x => x.status === 'completed'))],
+    ['Players', n(ps.length), 'Users'], ['Online now', n(ps.filter(p => p.is_online).length), 'Users'],
+    ['Coins held in wallets', n(sum(w, 'balance_coins')), 'Users'],
+    ['Deposited (coins)', n(sum(d, 'coins_requested', x => x.status === 'successful')), 'Payments'],
+    ['Pending withdrawals', `${pend.length} / ${n(sum(pend, 'coins'))}`, 'Payments'],
+    ['Paid out (coins)', n(sum(wd, 'coins', x => x.status === 'fulfilled')), 'Payments'],
+    ['Live matches', n(m.filter(x => x.status === 'in_progress').length), 'Matches'],
+    ['Disputed matches', n(m.filter(x => x.status === 'disputed').length), 'Matches'],
+    ['House earnings (coins)', n(sum(m, 'house_cut_coins', x => x.status === 'completed')), 'Matches'],
     ['Mode', cfg.data?.is_live ? 'LIVE' : 'TEST']
   ];
   const intl = cfg.data?.[INTL_COL] !== false;
@@ -111,7 +112,7 @@ async function vOverview() {
     <b class="${intl ? 'ok' : 'bad'}">${intl ? 'ON' : 'OFF'}</b>
     <span>USD and other non-NGN deposits &amp; withdrawals are ${intl ? 'allowed' : 'blocked'}.</span>
     <div style="margin-top:10px"><button data-a="intl" data-on="${intl ? '0' : '1'}">${intl ? 'Turn OFF' : 'Turn ON'}</button></div></div>`;
-  return `<div class="cards">${cards.map(([l, v]) => `<div class="card"><b>${v}</b><span>${l}</span></div>`).join('')}</div>${intlPanel}`;
+  return `<div class="cards">${cards.map(([l, v, go]) => go ? `<div class="card link" data-go="${go}" role="button" tabindex="0"><b>${v}</b><span>${l} &rsaquo;</span></div>` : `<div class="card"><b>${v}</b><span>${l}</span></div>`).join('')}</div>${intlPanel}`;
 }
 
 async function vUsers() {
@@ -161,6 +162,8 @@ async function render() {
   if (tab === 'Users') { drawUsers(); $('#q').oninput = drawUsers; }
 }
 
+document.addEventListener('click', e => { const c = e.target.closest('[data-go]'); if (c) { tab = c.dataset.go; say(''); render(); window.scrollTo(0, 0); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset?.go) e.target.click(); });
 $('#nav').onclick = e => { const t = e.target.dataset.t; if (t) { tab = t; say(''); render(); } };
 
 document.addEventListener('click', async e => {
