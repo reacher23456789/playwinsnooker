@@ -11,35 +11,38 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-:root{--bg:#0a1f17;--panel:#12362a;--line:rgba(244,240,228,.14);--text:#f4f0e4;--dim:#9db3a5;--gold:#d9a422;--bad:#e8675c;--ok:#4cc38a;color-scheme:dark}
+:root{--bg:#0e1c16;--panel:#15271f;--line:rgba(255,255,255,.09);--text:#f2f5f3;--dim:#93a79c;--gold:#2f9467;--bad:#ef7d72;--ok:#5ccb92;--soft:#1b3027;color-scheme:dark}
 *{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 'Work Sans',system-ui,sans-serif}
-button{font:inherit;font-weight:600;background:var(--gold);color:#1a1405;border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
-button:disabled{opacity:.5}button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
-input{font:inherit;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:11px 12px;width:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 'Work Sans',system-ui,sans-serif}
+button{font:inherit;font-weight:600;font-size:14px;background:var(--gold);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;transition:background .15s}
+button:hover{background:#38a877}
+button:disabled{opacity:.5}button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}button.ghost:hover{background:var(--soft)}
+input{font:inherit;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 12px;width:100%}
+input:focus{outline:2px solid rgba(47,148,103,.35);border-color:var(--gold)}
 .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
 .box h1{margin:0 0 4px;font-size:22px}
-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line)}
-header b{font-size:18px;margin-right:auto}
-nav{display:flex;gap:6px;flex-wrap:wrap}
-.tab{background:transparent;color:var(--dim);border:1px solid transparent}.tab.on{color:var(--text);border-color:var(--gold)}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+header b{font-size:17px;margin-right:auto}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+.tab{background:transparent;color:var(--dim);border:0;border-radius:8px}.tab:hover{background:var(--soft);color:var(--text)}.tab.on{color:var(--text);background:var(--gold)}
 main,#msg{max-width:1100px;margin:0 auto;padding:16px 20px}#msg{padding-bottom:0;min-height:1.4em}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:4px}
 .card b{font-size:24px}.card span,.dim{color:var(--dim);font-size:13px}
-.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin-bottom:24px}
+.wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:24px}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-h2{font-size:17px;margin:22px 0 10px}.search{margin-bottom:14px;max-width:360px}
-.pill{padding:2px 9px;border-radius:99px;font-size:12px;background:var(--line)}
-.pill.successful,.pill.fulfilled,.pill.completed{background:rgba(76,195,138,.2);color:var(--ok)}
-.pill.failed,.pill.rejected,.pill.disputed,.pill.cancelled{background:rgba(232,103,92,.2);color:var(--bad)}
-.pill.pending,.pill.processing,.pill.in_progress{background:rgba(217,164,34,.2);color:var(--gold)}
+tr:last-child td{border-bottom:0}tr:hover td{background:rgba(255,255,255,.03)}
+th{color:var(--dim);background:var(--soft);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+h2{font-size:16px;margin:24px 0 10px}.search{margin-bottom:14px;max-width:360px}
+.pill{padding:2px 10px;border-radius:99px;font-size:12px;font-weight:500;background:var(--soft);color:var(--dim)}
+.pill.successful,.pill.fulfilled,.pill.completed{background:rgba(92,203,146,.16);color:var(--ok)}
+.pill.failed,.pill.rejected,.pill.disputed,.pill.cancelled{background:rgba(239,125,114,.16);color:var(--bad)}
+.pill.pending,.pill.processing,.pill.in_progress{background:rgba(232,190,90,.16);color:#e8be5a}
 .bad{color:var(--bad)}.ok{color:var(--ok)}.neg{color:var(--bad)}.pos{color:var(--ok)}
 .pwwrap{position:relative}.pwwrap input{padding-right:46px}
-.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:transparent;color:var(--dim);padding:8px 11px}
+.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:transparent;color:var(--dim);padding:8px 11px}.eye:hover{background:transparent;color:var(--text)}
 </style>
 </head>
 <body>
@@ -78,6 +81,7 @@ const tbl = (head, rows) => `<div class="wrap"><table><tr>${head.map(h => `<th>$
   rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${head.length}" class="dim">Nothing here yet.</td></tr>`}</table></div>`;
 const say = (t, bad) => { const m = $('#msg'); m.textContent = t || ''; m.className = bad ? 'bad' : 'ok'; };
 
+const INTL_COL = 'international_payments_enabled'; // column in app_config that the backend checks
 const TABS = ['Overview', 'Users', 'Payments', 'Matches'];
 let tab = 'Overview', names = {}, users = [];
 const nm = id => esc(names[id] || String(id).slice(0, 8));
@@ -87,7 +91,7 @@ async function vOverview() {
   const [w, d, wd, m, ps, cfg] = await Promise.all([
     g('wallets', 'balance_coins'), g('deposits', 'status,coins_requested'), g('withdrawals', 'status,coins'),
     g('matches', 'status,house_cut_coins'), g('player_stats', 'is_online'),
-    sb.from('app_config').select('is_live').maybeSingle()
+    sb.from('app_config').select('*').maybeSingle()
   ]);
   const sum = (a, k, f = () => true) => a.filter(f).reduce((s, x) => s + Number(x[k] || 0), 0);
   const pend = wd.filter(x => x.status === 'pending');
@@ -102,7 +106,12 @@ async function vOverview() {
     ['House earnings (coins)', n(sum(m, 'house_cut_coins', x => x.status === 'completed'))],
     ['Mode', cfg.data?.is_live ? 'LIVE' : 'TEST']
   ];
-  return `<div class="cards">${cards.map(([l, v]) => `<div class="card"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  const intl = cfg.data?.[INTL_COL] !== false;
+  const intlPanel = `<h2>International payments</h2><div class="card" style="max-width:420px">
+    <b class="${intl ? 'ok' : 'bad'}">${intl ? 'ON' : 'OFF'}</b>
+    <span>USD and other non-NGN deposits &amp; withdrawals are ${intl ? 'allowed' : 'blocked'}.</span>
+    <div style="margin-top:10px"><button data-a="intl" data-on="${intl ? '0' : '1'}">${intl ? 'Turn OFF' : 'Turn ON'}</button></div></div>`;
+  return `<div class="cards">${cards.map(([l, v]) => `<div class="card"><b>${v}</b><span>${l}</span></div>`).join('')}</div>${intlPanel}`;
 }
 
 async function vUsers() {
@@ -156,7 +165,7 @@ $('#nav').onclick = e => { const t = e.target.dataset.t; if (t) { tab = t; say('
 
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-a]'); if (!b) return;
-  const { a, id, w } = b.dataset; b.disabled = true;
+  const { a, id, w, on } = b.dataset; b.disabled = true;
   const done = (err, okText) => say(err || okText, !!err);
   if (a === 'pay' && confirm('Send this payout through Paystack now?')) {
     const { data, error } = await sb.functions.invoke('process-withdrawal', { body: { withdrawal_id: id } });
@@ -167,6 +176,9 @@ document.addEventListener('click', async e => {
       const { error } = await sb.rpc('admin_reject_withdrawal', { p_withdrawal_id: id, p_reason: r || null });
       done(error?.message, 'Withdrawal rejected and coins refunded.');
     }
+  } else if (a === 'intl' && confirm(on === '1' ? 'Turn International payments ON?' : 'Turn International payments OFF? Users will only be able to use NGN.')) {
+    const { data: rows, error } = await sb.from('app_config').update({ [INTL_COL]: on === '1' }).not(INTL_COL, 'is', null).select();
+    done(error?.message || (!rows?.length ? 'Not saved. Check the admin update policy on app_config.' : null), on === '1' ? 'International payments are now ON.' : 'International payments are now OFF.');
   } else if (a === 'win' && confirm('Pay this player the pot (minus the 10% house cut)?')) {
     const { error } = await sb.rpc('admin_resolve_dispute', { p_match_id: id, p_winner: w });
     done(error?.message, 'Dispute resolved and winner paid.');
